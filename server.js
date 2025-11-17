@@ -14,7 +14,7 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 app.use(
   cors({
     // origin: ["http://localhost:5173", "https://email-sender-cy30.onrender.com"],
-    origin: "https://email-sender-cy30.onrender.com",
+    origin: "https://email-sender-eight-sand.vercel.app",
     methods: ["POST", "GET"],
     allowedHeaders: ["Content-Type"],
   })
