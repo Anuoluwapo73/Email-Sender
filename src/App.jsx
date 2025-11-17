@@ -12,7 +12,7 @@ function App() {
     setStatus("Sending...");
 
     try {
-      const res = await fetch("http://localhost:5000/send", {
+      const res = await fetch("https://email-sender-cy30.onrender.com", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, age, message }),
