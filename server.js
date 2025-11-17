@@ -3,14 +3,17 @@ import cors from "cors";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 dotenv.config();
+import sgMail from "@sendgrid/mail";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
 //Middleware
 app.use(
   cors({
-    origin: "https://email-sender-eight-sand.vercel.app",
+    origin: "http://localhost:5173",
     methods: ["POST", "GET"],
     allowedHeaders: ["Content-Type"],
   })
@@ -19,13 +22,15 @@ app.use(
 app.use(express.json());
 
 //Nodemailer transporter
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+// const transporter = nodemailer.createTransport({
+//   service: "gmail",
+//   port: 587,
+//   secure: false,
+//   auth: {
+//     user: process.env.EMAIL_USER,
+//     pass: process.env.EMAIL_PASS,
+//   },
+// });
 
 app.get("/", (req, res) => {
   res.send("Email Service is Running");
@@ -39,7 +44,6 @@ app.post("/send", async (req, res) => {
     return res.status(400).json({ error: "All fields are required" });
   }
 
-  // Email 1 → Send to YOU (Admin)
   const adminMail = {
     from: process.env.EMAIL_USER,
     to: process.env.EMAIL_USER,
@@ -56,6 +60,24 @@ app.post("/send", async (req, res) => {
       </div>
     `,
   };
+
+  // Email 1 → Send to YOU (Admin)
+  // const adminMail = {
+  //   from: process.env.EMAIL_USER,
+  //   to: process.env.EMAIL_USER,
+  //   subject: `New message from ${name}`,
+  //   html: `
+  //     <div style="font-family: Arial; line-height: 1.5;">
+  //       <h2 style="color: #1D4ED8;">New User Message</h2>
+  //       <p style="font-size: 15px;"><strong>Name:</strong> ${name}</p>
+  //       <p style="font-size: 15px;"><strong>Email:</strong> ${email}</p>
+  //       <p style="font-size: 15px;"><strong>Message:</strong></p>
+  //       <p style="background: #f5f5f5; padding: 10px; border-radius: 5px;">
+  //         ${message}
+  //       </p>
+  //     </div>
+  //   `,
+  // };
 
   // Email 2 → Send to the USER
   const userMail = {
@@ -87,9 +109,9 @@ app.post("/send", async (req, res) => {
 
   try {
     // Send email to admin
-    await transporter.sendMail(adminMail);
+    await sgMail.send(adminMail);
     // Send confirmation to user
-    await transporter.sendMail(userMail);
+    await sgMail.send(userMail);
 
     res.json({ success: true, message: "Emails sent successfully" });
   } catch (err) {
