@@ -2,39 +2,29 @@ import express from "express";
 import cors from "cors";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
+
 dotenv.config();
-import sgMail from "@sendgrid/mail";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-
 //Middleware
-app.use(
-  cors({
-    // origin: ["http://localhost:5173", "https://email-sender-cy30.onrender.com"],
-    origin: "https://email-sender-eight-sand.vercel.app",
-    methods: ["POST", "GET"],
-    allowedHeaders: ["Content-Type"],
-  })
-);
-
+app.use(cors());
 app.use(express.json());
+app.use(express.static(path.join(__dirname, "dist")));
 
 //Nodemailer transporter
-// const transporter = nodemailer.createTransport({
-//   service: "gmail",
-//   port: 587,
-//   secure: false,
-//   auth: {
-//     user: process.env.EMAIL_USER,
-//     pass: process.env.EMAIL_PASS,
-//   },
-// });
-
-app.get("/", (req, res) => {
-  res.send("Email Service is Running");
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
 });
 
 //POST route to send email
@@ -109,16 +99,30 @@ app.post("/send", async (req, res) => {
   };
 
   try {
-    // Send email to admin
-    await sgMail.send(adminMail);
-    // Send confirmation to user
-    await sgMail.send(userMail);
+    console.log("Attempting to send admin email...");
+    await transporter.sendMail(adminMail);
+    console.log("Admin email sent successfully");
+    
+    console.log("Attempting to send user email...");
+    await transporter.sendMail(userMail);
+    console.log("User email sent successfully");
 
     res.json({ success: true, message: "Emails sent successfully" });
   } catch (err) {
-    console.error("Error sending emails:", err);
-    res.status(500).json({ success: false, message: "Failed to send email" });
+    console.error("Detailed error:", err.message);
+    console.error("Error code:", err.code);
+    console.error("Full error:", err);
+    res.status(500).json({ 
+      success: false, 
+      message: "Failed to send email",
+      error: err.message 
+    });
   }
+});
+
+// Serve frontend
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
 
 //Start server
