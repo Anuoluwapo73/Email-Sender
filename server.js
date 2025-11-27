@@ -120,8 +120,8 @@ app.post("/send", async (req, res) => {
   }
 });
 
-// Serve frontend for all other routes
-app.get("/*", (req, res) => {
+// Serve frontend - fallback for SPA routing
+app.use((req, res) => {
   res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
 
